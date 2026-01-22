@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Trinetra – AI Job Matching Prototype</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+        }
+        
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        
+        #status {
+            text-align: center;
+            margin-top: 12px;
+            color: #666;
+        }
+        
+        .jobs {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .job-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #f8fafc;
+        }
+        
+        .job-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .company {
+            color: #555;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+        
+        .high {
+            background: #d4f8d4;
+            color: #1f7a1f;
+        }
+        
+        .medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .low {
+            background: #e2e3e5;
+            color: #555;
+        }
+        
+        .reason {
+            font-size: 13px;
+            color: #444;
+            margin-top: 8px;
+        }
+        
+        #openChat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 50px;
+            background: #007bff;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        
+        .chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+        
+        .chat-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 340px;
+            background: #ffffff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 10px;
+            background: #007bff;
+            color: #ffffff;
+            border-radius: 10px 10px 0 0;
+            font-weight: bold;
+        }
+        
+        .chat-messages {
+            padding: 10px;
+            height: 260px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            border: none;
+            padding: 10px;
+            outline: none;
+        }
+        
+        .chat-input button {
+            border: none;
+            padding: 10px 15px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        .user {
+            margin-bottom: 8px;
+        }
+        
+        .bot {
+            margin-bottom: 8px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>AI-Powered Job Matching Prototype</h1>
+        <input type="file" id="resume">
+        <button onclick="uploadResume()">Upload Resume</button>
+        <div id="status"></div>
+
+        <div class="jobs" id="jobs">
+            <h3>Best Job Matches</h3>
+
+            <div class="job-card">
+                <div class="job-title">Frontend Developer</div>
+                <div class="company">TechNova • Remote</div>
+                <div class="badge high">Match Score: 82%</div>
+                <div class="reason">Matched due to JavaScript experience and frontend project exposure.</div>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Product Operations Associate</div>
+                <div class="company">GrowthLabs • Hybrid</div>
+                <div class="badge medium">Match Score: 64%</div>
+                <div class="reason">Relevant coordination skills and cross-team communication experience.</div>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Marketing Analyst</div>
+                <div class="company">Brandify • On-site</div>
+                <div class="badge low">Match Score: 38%</div>
+                <div class="reason">Partial overlap in content skills, limited analytics experience.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <button id="openChat">AI Chat</button>
+
+    <div class="chat-overlay" id="overlay">
+        <div class="chat-box">
+            <div class="chat-header">AI Assistant</div>
+            <div class="chat-messages" id="msgs">
+                <div class="bot">Assistant: I help explain job matches, scores, and application flow.</div>
+            </div>
+            <div class="chat-input">
+                <input id="chatInput" placeholder="Ask something...">
+                <button onclick="sendMsg()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function uploadResume() {
+            const file = document.getElementById("resume").files.length;
+            if (!file) {
+                document.getElementById("status").innerText = "Please upload a resume first.";
+                return;
+            }
+            document.getElementById("status").innerText = "Resume processed. AI matching jobs...";
+            setTimeout(() => {
+                document.getElementById("jobs").style.display = "block";
+                document.getElementById("status").innerText = "Top matches generated based on resume.";
+            }, 800);
+        }
+
+        const openChat = document.getElementById("openChat");
+        const overlay = document.getElementById("overlay");
+        const chatInput = document.getElementById("chatInput");
+
+        openChat.onclick = () => overlay.style.display = "block";
+        overlay.onclick = e => {
+            if (e.target === overlay) overlay.style.display = "none";
+        }
+
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape") overlay.style.display = "none";
+            if (e.key === "Enter" && overlay.style.display === "block") sendMsg();
+        });
+
+        function sendMsg() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            document.getElementById("msgs").innerHTML += `<div class="user">You: ${text}</div>`;
+            chatInput.value = "";
+
+            setTimeout(() => {
+                let replyPool = [];
+                const msg = text.toLowerCase();
+                if (msg.includes("score") || msg.includes("match")) {
+                    replyPool = [
+                        "Looks like your skills match well for some roles here.",
+                        "These scores show where your experience fits best.",
+                        "Match percentage calculated based on relevant skills and projects."
+                    ];
+                } else if (msg.includes("resume") || msg.includes("upload")) {
+                    replyPool = [
+                        "Make sure your resume highlights the right skills.",
+                        "Resume uploaded successfully. Matching jobs now.",
+                        "We analyzed your resume and found best fit roles."
+                    ];
+                } else if (msg.includes("job") || msg.includes("role")) {
+                    replyPool = [
+                        "These roles might interest you based on your profile.",
+                        "Check out these job matches carefully.",
+                        "Best matches are ranked for you."
+                    ];
+                } else {
+                    replyPool = [
+                        "Interesting, tell me more.",
+                        "Got it. Can you clarify?",
+                        "Hmm, let's see how that fits in."
+                    ];
+                }
+                const reply = replyPool[Math.floor(Math.random() * replyPool.length)];
+                document.getElementById("msgs").innerHTML += `<div class="bot">Assistant: ${reply}</div>`;
+                document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+            }, 500);
+        }
+    </script>
+
+</body>
+
+</html>
